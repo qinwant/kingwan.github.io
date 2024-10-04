@@ -1,67 +1,67 @@
 name: CI
-
+# 当有改动推送到master分支时，启动Action
 on:
   push:
     branches:
       - main
-
-env:
-  GIT_USER: Kingwan
-  GIT_EMAIL: 1045279974@qq.com
-  # THEME_REPO: sanonz/hexo-theme-concise
-  # THEME_BRANCH: main
-  DEPLOY_REPO: qinwant/kingwan.github.io
-  DEPLOY_BRANCH: main
+  release:
+    types:
+      - published
 
 jobs:
-  build:
-    name: Build on node ${{ matrix.node_version }} and ${{ matrix.os }}
+  deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node_version: [16.x]
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Checkout theme repo
-        uses: actions/checkout@v4
+      - name: 检查分支
+        uses: actions/checkout@v2
         with:
-          repository: ${{ env.THEME_REPO }}
-          ref: ${{ env.THEME_BRANCH }}
-          path: themes/concise
+          ref: master
 
-      - name: Checkout deploy repo
-        uses: actions/checkout@v4
+      - name: 安装 Node
+        uses: actions/setup-node@v1
         with:
-          repository: ${{ env.DEPLOY_REPO }}
-          ref: ${{ env.DEPLOY_BRANCH }}
-          path: .deploy_git
+          node-version: "20.x"
 
-      - name: Use Node.js ${{ matrix.node_version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node_version }}
-
-      - name: Configuration environment
+      - name: 安装 Hexo
+        run: |
+          export TZ='Asia/Shanghai'
+          npm install hexo-cli -g
+          
+      - name: Install Pandoc
+        run: |
+          curl -s -L https://github.com/jgm/pandoc/releases/download/2.9.2/pandoc-2.9.2-linux-amd64.tar.gz | tar xvzf - -C $RUNNER_TOOL_CACHE/
+     
+      - name: 缓存 Hexo
+        id: cache-npm
+        uses: actions/cache@v3
         env:
-          HEXO_DEPLOY_PRI: ${{secrets.HEXO_DEPLOY_PRI}}
-        run: |
-          sudo timedatectl set-timezone "Asia/Shanghai"
-          mkdir -p ~/.ssh/
-          echo "$HEXO_DEPLOY_PRI" > ~/.ssh/id_rsa
-          chmod 777 ~/.ssh/id_rsa
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          git config --global user.name $GIT_USER
-          git config --global user.email $GIT_EMAIL
-          cp _config.anzhiyu.yml themes/concise/_config.yml
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
 
-      - name: Install dependencies
+      - name: 安装依赖
+        if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
         run: |
-          npm install
+          npm install gulp-cli -g #全局安装gulp
+          npm install --save
 
-      - name: Deploy hexo
+      - name: 生成静态文件
         run: |
-          npm run deploy
+          export PATH="$PATH:$RUNNER_TOOL_CACHE/pandoc-2.9.2/bin"
+          hexo clean
+          hexo generate
+          gulp
+
+      - name: 部署到Github
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.TOKEN }}
+          repository-name: qinwant/kingwan.github.io
+          branch: main
+          folder: public
+          commit-message: "${{ github.event.head_commit.message }} Updated By Github Actions"
