@@ -60,7 +60,7 @@ jobs:
       - name: 部署到Github
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          token: ${{ secrets.TOKEN }}
+          token: ${{ secrets.HEXO_DEPLOY_PRI }}
           repository-name: qinwant/kingwan.github.io
           branch: main
           folder: public
