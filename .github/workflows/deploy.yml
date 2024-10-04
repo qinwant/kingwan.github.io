@@ -60,8 +60,8 @@ jobs:
       - name: 部署到Github
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          token: ${{ secrets.HEXO_DEPLOY_PRI }}
+          token: ${{ secrets.HEXO_TOKEN }}
           repository-name: qinwant/kingwan.github.io
           branch: main
           folder: public
-          commit-message: "${{ github.event.head_commit.message }} Updated By Github Actions"
+          # commit-message: "${{ github.event.head_commit.message }} Updated By Github Actions"
