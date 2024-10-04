@@ -57,6 +57,20 @@ jobs:
           hexo generate
           # gulp
 
+      - name: 清理临时目录
+        run: |
+          if [ -d "github-pages-deploy-action-temp-deployment-folder" ]; then
+            echo "Deleting existing temporary directory"
+            rm -rf github-pages-deploy-action-temp-deployment-folder
+          else
+            echo "No temporary directory found"
+          fi    
+      - name: 查看权限
+        run: ls -la
+      - name: 查看 Git 状态
+        run: git status  
+      - name: 查看远程仓库
+        run: git remote -v
       - name: 部署到Github
         uses: JamesIves/github-pages-deploy-action@v4
         with:
@@ -64,4 +78,4 @@ jobs:
           repository-name: qinwant/kingwan.github.io
           branch: main
           folder: public
-          # commit-message: "${{ github.event.head_commit.message }} Updated By Github Actions"
+          commit-message: "${{ github.event.head_commit.message }} Updated By Github Actions"
