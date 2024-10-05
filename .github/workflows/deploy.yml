@@ -63,4 +63,4 @@ jobs:
           repository-name: qinwant/kingwan.github.io
           branch: main
           folder: public
-          commit-message: "${{ github.event.head_commit.message }} Updated By Github Actions"
+          # commit-message: "${{ github.event.head_commit.message }} Updated By Github Actions"
