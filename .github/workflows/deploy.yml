@@ -55,7 +55,6 @@ jobs:
           export PATH="$PATH:$RUNNER_TOOL_CACHE/pandoc-2.9.2/bin"
           hexo clean
           hexo generate
-          gulp
       - name: 部署到Github
         uses: JamesIves/github-pages-deploy-action@v4
         with:
